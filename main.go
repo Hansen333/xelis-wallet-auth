@@ -1,7 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
+
+	daemon "github.com/xelis-project/xelis-go-sdk/daemon"
+	sig "github.com/xelis-project/xelis-go-sdk/signature"
+	w "github.com/xelis-project/xelis-go-sdk/wallet"
+	x "github.com/xelis-project/xelis-go-sdk/xswd"
 )
 
 // Authentication Process Overview
@@ -35,13 +41,90 @@ import (
 // This authentication process leverages standard cryptographic techniques, ensuring secure communication
 // and validation of wallet ownership without exposing private keys or sensitive information.
 
+func performHandshake(conn *x.XSWD) error {
+
+	// Define the ApplicationData
+	appData := x.ApplicationData{
+		ID:          "0000006b2aec4651b82111816ed599d1b72176c425128c66b2ab945552437dc9",
+		Name:        "MyXELISApp",
+		Description: "An example application integrating with XELIS wallet.",
+		Permissions: make(map[string]x.Permission),
+	}
+
+	response, err := conn.Authorize(appData)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	// log.Printf("%+v", response)
+
+	// Check for errors in the response
+	if response.Error != nil {
+		return fmt.Errorf("handshake error: %v", response.Error)
+	}
+
+	log.Printf("Handshake successful: %s", response.Result)
+	return nil
+}
+
+func QueryWalletAddress(conn *x.XSWD) (address string, err error) {
+
+	address, err = conn.Wallet.GetAddress(w.GetAddressParams{})
+
+	// Check for errors in the response
+	if err != nil {
+		return "", fmt.Errorf("RPC error: %v", err.Error())
+	}
+
+	// Return the wallet address from the result field
+	return
+}
+
+// QueryPublicKey retrieves the public key for a given wallet address
+func QueryPublicKey(conn *daemon.WebSocket, walletAddress string) (string, error) {
+	// Prepare the parameters
+	params := daemon.ExtractKeyFromAddressParams{
+		Address: walletAddress,
+		AsHex:   true,
+	}
+
+	// Call the method to extract the key
+	result, err := conn.ExtractKeyFromAddress(params)
+	if err != nil {
+		return "", fmt.Errorf("failed to extract key from address: %v", err)
+	}
+
+	// Ensure result is a map
+	resultMap, ok := result.(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("unexpected result type: %T", result)
+	}
+
+	// Extract the "hex" value
+	hexValue, ok := resultMap["hex"]
+	if !ok {
+		return "", fmt.Errorf("hex key not found in the result")
+	}
+
+	// Ensure the "hex" value is a string
+	hexStr, ok := hexValue.(string)
+	if !ok {
+		return "", fmt.Errorf("hex value is not a string, got: %T", hexValue)
+	}
+
+	return hexStr, nil
+}
+
 func main() {
 	// Wallet and daemon WebSocket URLs
 	walletWebSocketURL := "ws://localhost:44325/xswd"
 	daemonWebSocketURL := "wss://xelis-node.mysrv.cloud/json_rpc"
 
 	// Connect to wallet WebSocket
-	walletConn := connectToWebSocket(walletWebSocketURL)
+	walletConn, err := x.NewXSWD(walletWebSocketURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to wallet XSWD: %v", err)
+	}
 	defer walletConn.Close()
 
 	// Perform handshake with the wallet
@@ -50,14 +133,18 @@ func main() {
 	}
 
 	// Query the wallet for its address
-	address, err := QueryWalletAddress(walletConn)
+	address, err := walletConn.Wallet.GetAddress(w.GetAddressParams{})
+
 	if err != nil {
 		log.Fatalf("Failed to query wallet address: %v", err)
 	}
 	log.Printf("Wallet address: %s", address)
 
 	// Connect to daemon WebSocket
-	daemonConn := connectToWebSocket(daemonWebSocketURL)
+	daemonConn, err := daemon.NewWebSocket(daemonWebSocketURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to daemon websocket: %v", err.Error())
+	}
 	defer daemonConn.Close()
 
 	// Query the node for the public key
@@ -65,20 +152,28 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to query public key: %v", err)
 	}
-	log.Printf("Public key for wallet %s: %s", address, publicKey)
+	log.Printf("Public key for wallet %s: %+v", address, publicKey)
 
 	// Data to sign
-	data := "Hello, XELIS!"
+	// data := map[string]interface{}{"hello": "world"}
+	// // Convert the map to JSON bytes
+	// dataBytes, err := json.Marshal(data)
+	// if err != nil {
+	// 	fmt.Println("Error marshaling data:", err)
+	// 	return
+	// }
+
+	var dataBytes []byte
 
 	// Request the wallet to sign the data
-	signature, err := SignData(walletConn, data)
+	signature, err := walletConn.Wallet.SignData(dataBytes)
 	if err != nil {
 		log.Fatalf("Failed to sign data: %v", err)
 	}
 	log.Printf("Signature: %s", signature)
 
 	// Verify the signature using the public key
-	isValid, err := VerifySignature(publicKey, signature, data)
+	isValid, err := sig.Verify2(publicKey, signature, dataBytes)
 	if err != nil {
 		log.Fatalf("Failed to verify signature: %v", err)
 	}
