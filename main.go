@@ -5,6 +5,7 @@ import (
 	"log"
 
 	daemon "github.com/xelis-project/xelis-go-sdk/daemon"
+	d "github.com/xelis-project/xelis-go-sdk/data"
 	sig "github.com/xelis-project/xelis-go-sdk/signature"
 	w "github.com/xelis-project/xelis-go-sdk/wallet"
 	x "github.com/xelis-project/xelis-go-sdk/xswd"
@@ -46,8 +47,8 @@ func performHandshake(conn *x.XSWD) error {
 	// Define the ApplicationData
 	appData := x.ApplicationData{
 		ID:          "0000006b2aec4651b82111816ed599d1b72176c425128c66b2ab945552437dc9",
-		Name:        "MyXELISApp",
-		Description: "An example application integrating with XELIS wallet.",
+		Name:        "Xelis Authendication",
+		Description: "Proof Of Concept - Authendicate using Xelis Wallet.",
 		Permissions: make(map[string]x.Permission),
 	}
 
@@ -120,6 +121,8 @@ func main() {
 	walletWebSocketURL := "ws://localhost:44325/xswd"
 	daemonWebSocketURL := "wss://xelis-node.mysrv.cloud/json_rpc"
 
+	log.Println("Allow Application in Wallet, and permit the two requests to complete the authendication")
+
 	// Connect to wallet WebSocket
 	walletConn, err := x.NewXSWD(walletWebSocketURL)
 	if err != nil {
@@ -155,23 +158,21 @@ func main() {
 	log.Printf("Public key for wallet %s: %+v", address, publicKey)
 
 	// Data to sign
-	// data := map[string]interface{}{"hello": "world"}
-	// // Convert the map to JSON bytes
-	// dataBytes, err := json.Marshal(data)
-	// if err != nil {
-	// 	fmt.Println("Error marshaling data:", err)
-	// 	return
-	// }
-
-	var dataBytes []byte
+	data := d.Element{Fields: map[d.Value]d.Element{
+		"hello": d.Element{Value: "world"},
+	}}
 
 	// Request the wallet to sign the data
-	signature, err := walletConn.Wallet.SignData(dataBytes)
+	signature, err := walletConn.Wallet.SignData(data)
 	if err != nil {
 		log.Fatalf("Failed to sign data: %v", err)
 	}
 	log.Printf("Signature: %s", signature)
 
+	dataBytes, err := data.ToBytes()
+	if err != nil {
+		return
+	}
 	// Verify the signature using the public key
 	isValid, err := sig.Verify2(publicKey, signature, dataBytes)
 	if err != nil {
@@ -180,8 +181,9 @@ func main() {
 	if isValid {
 		log.Println("Signature is valid!")
 	} else {
-		log.Println("Signature is invalid!")
+		log.Fatal("Signature is invalid!")
 	}
-	// Keep the application running
-	select {}
+
+	log.Println("Success! Wallet Authendicated Successfully")
+
 }

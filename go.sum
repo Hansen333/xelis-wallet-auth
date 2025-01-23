@@ -10,6 +10,8 @@ github.com/gtank/ristretto255 v0.1.2 h1:JEqUCPA1NvLq5DwYtuzigd7ss8fwbYay9fi4/5uM
 github.com/gtank/ristretto255 v0.1.2/go.mod h1:Ph5OpO6c7xKUGROZfWVLiJf9icMDwUeIvY4OmlYW69o=
 github.com/xelis-project/xelis-go-sdk v0.4.7-0.20250122195040-a75b8ef1f119 h1:1y+6YZJq08pQByrVc3bHNXra/kwgFIFpXP1B+gqMM0Y=
 github.com/xelis-project/xelis-go-sdk v0.4.7-0.20250122195040-a75b8ef1f119/go.mod h1:T2IvV3COOTBcFFxuVJdOV352r4ZbbCGSxqRILsy9Mco=
+github.com/xelis-project/xelis-go-sdk v0.4.7-0.20250123161809-437ab5464531 h1:notmQeStb3iDwHY8vm+7EAufTmfQdcAGmVUs18AMmsQ=
+github.com/xelis-project/xelis-go-sdk v0.4.7-0.20250123161809-437ab5464531/go.mod h1:T2LLj9RnYIUHZln4MnVXTy9XEUzAYGEXZSWs6/vByeU=
 golang.org/x/crypto v0.32.0 h1:euUpcYgM8WcP71gNpTqQCn6rC2t6ULUPiOzfWaXVVfc=
 golang.org/x/crypto v0.32.0/go.mod h1:ZnnJkOaASj8g0AjIduWNlq2NRxL0PlBrbKVyZ6V/Ugc=
 golang.org/x/sync v0.1.0 h1:wsuoTGHzEhffawBOhz5CYhcrV4IdKZbEyZjBMuTp12o=

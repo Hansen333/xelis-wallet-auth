@@ -12,6 +12,6 @@ require (
 
 require (
 	github.com/creachadair/jrpc2 v0.44.0 // indirect
-	github.com/xelis-project/xelis-go-sdk v0.4.7-0.20250122195040-a75b8ef1f119
+	github.com/xelis-project/xelis-go-sdk v0.4.7-0.20250123161809-437ab5464531
 	golang.org/x/sync v0.1.0 // indirect
 )

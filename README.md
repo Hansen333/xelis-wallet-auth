@@ -32,6 +32,12 @@ This authentication process leverages standard cryptographic techniques, ensurin
 
 To run the application, execute the following command in your terminal:
 
+- Start Xelis Wallet with XSWD enabled
+```
+./xelis_wallet --daemon-address https://xelis-node.mysrv.cloud --enable-xswd 
+```
+
+- Run Application to Perform Authendication
 ```bash
-go run main.go wallet.go daemon.go utils.go
+go run main.go
 ```
